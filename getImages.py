@@ -1,6 +1,8 @@
 import cv2
 
-cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture(0, cv2.CAP_V4L) # 0 is the camera index
+cap = cv2.VideoCapture(2, cv2.CAP_V4L) # 2 is the camera index
+
 
 num = 0
 
