@@ -2,8 +2,7 @@ import cv2
 import numpy as np
 import glob
 import pickle
-
-################ CAMERA CALIBRATION #############################
+import os
 
 def calibrate_camera(images_folder, chessboard_size, frame_size):
     # Prepare object points
@@ -33,82 +32,23 @@ def calibrate_camera(images_folder, chessboard_size, frame_size):
 
     return camera_matrix, dist_coeffs
 
-################ COORDINATE TRANSFORMATION #############################
+# Load or define the pre-trained CNN model for feature extraction
+# model = ...  # Load or define the CNN model
 
-def transform_coordinates(detected_points, camera_matrix, dist_coeffs, rotation_matrix, translation_vector, offset):
-    # Undistort detected points
-    undistorted_points = cv2.undistortPoints(detected_points, camera_matrix, dist_coeffs)
+# Chessboard dimensions
+chessboard_size = (9, 6)  # Number of inner corners: (columns, rows)
+frame_size = (640, 480)  # Camera frame size
 
-    # Convert undistorted points to homogeneous coordinates
-    undistorted_points = np.squeeze(undistorted_points, axis=1).astype(np.float32)
-    undistorted_points_homogeneous = np.hstack((undistorted_points, np.ones((undistorted_points.shape[0], 1), dtype=np.float32)))
+# Calibrate left camera
+left_camera_matrix, left_dist_coeffs = calibrate_camera('left_images', chessboard_size, frame_size)
+print("Left Camera Calibration Done!")
 
-    # Convert rotation matrix and translation vector to 3x4 transformation matrix
-    transformation_matrix = np.eye(4)
-    transformation_matrix[:3, :3] = rotation_matrix
-    transformation_matrix[:3, 3] = (translation_vector.flatten() + offset)[:3]
-    transformation_matrix = transformation_matrix[:3, :]  # Extract the first 3 rows
+# Calibrate right camera
+right_camera_matrix, right_dist_coeffs = calibrate_camera('right_images', chessboard_size, frame_size)
+print("Right Camera Calibration Done!")
 
-    # Transform object coordinates from camera coordinate system to world coordinate system
-    object_points_world_homogeneous = []
-    for point in undistorted_points_homogeneous:
-        transformed_point = np.dot(point, transformation_matrix)
-        object_points_world_homogeneous.append(transformed_point)
-
-    object_points_world_homogeneous = np.array(object_points_world_homogeneous)
-    object_points_world = object_points_world_homogeneous[:, :3]
-
-    return object_points_world
-
-################ MAIN FUNCTION #############################
-
-def main():
-    # Chessboard dimensions
-    chessboard_size = (9, 6)  # Number of inner corners: (columns, rows)
-    frame_size = (640, 480)  # Camera frame size
-
-    # Calibrate left camera
-    left_camera_matrix, left_dist_coeffs = calibrate_camera('left_images', chessboard_size, frame_size)
-    print("Left Camera Calibration Done!")
-
-    # Calibrate right camera
-    right_camera_matrix, right_dist_coeffs = calibrate_camera('right_images', chessboard_size, frame_size)
-    print("Right Camera Calibration Done!")
-
-    # Save the camera calibration results
-    with open('left_calibration.pkl', 'wb') as file:
-        pickle.dump((left_camera_matrix, left_dist_coeffs), file)
-    with open('right_calibration.pkl', 'wb') as file:
-        pickle.dump((right_camera_matrix, right_dist_coeffs), file)
-
-    # Camera positions relative to the center point (in inches)
-    left_offset = np.array([-12, 0, -6])  # 12 inches left, 6 inches back
-    right_offset = np.array([12, 0, -6])  # 12 inches right, 6 inches back
-
-    # Rotation and translation matrices (replace with actual values)
-    left_rotation_matrix = np.eye(3)
-    left_translation_vector = np.zeros((3, 1))
-    right_rotation_matrix = np.eye(3)
-    right_translation_vector = np.zeros((3, 1))
-
-    # Object detection (replace with actual object detection code)
-    left_detected_points = np.array([[100, 200], [300, 400], [500, 600], [700, 800], [900, 1000]], dtype=np.float32)
-    right_detected_points = np.array([[150, 250], [350, 450], [550, 650], [750, 850], [950, 1050]], dtype=np.float32)
- 
-    # Transform object coordinates for left camera
-    left_object_points_world = transform_coordinates(left_detected_points, left_camera_matrix, left_dist_coeffs,
-                                                     left_rotation_matrix, left_translation_vector, left_offset)
-
-    # Transform object coordinates for right camera
-    right_object_points_world = transform_coordinates(right_detected_points, right_camera_matrix, right_dist_coeffs,
-                                                      right_rotation_matrix, right_translation_vector, right_offset)
-
-    # Combine transformed object coordinates
-    object_points_world = np.concatenate((left_object_points_world, right_object_points_world), axis=0)
-
-    # Print the transformed object coordinates
-    print("Transformed object coordinates in world coordinate system:")
-    print(object_points_world)
-
-if __name__ == '__main__':
-    main()
+# Save the intrinsic calibration results
+with open('left_calibration.pkl', 'wb') as file:
+    pickle.dump((left_camera_matrix, left_dist_coeffs), file)
+with open('right_calibration.pkl', 'wb') as file:
+    pickle.dump((right_camera_matrix, right_dist_coeffs), file)
