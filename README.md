@@ -1,6 +1,15 @@
-1. first create  `images` folder then open `get_images.py` press `s` to take images for every single cam.
-2. if there is 2 cam give name "left_camera" , "right_camera".
-3. run `Two(Left:right)camera_calibration.py`.
-4. run `extrinsic_para.py`
-5. run `main.py`
-   
+To use this code, follow these steps:
+
+1. Set up the camera and ensure it is properly connected.
+2. Run the `get_image.py` script to capture calibration images. Press 's' to save an image and 'ESC' to exit.
+3. Place the captured calibration images in the appropriate folders (`left_images` and `right_images`).
+4. Run the `two_camera_calibration.py` script to perform intrinsic calibration for the left and right cameras.
+5. Run the `extrinsic_para.py` script to perform extrinsic calibration using various techniques.
+6. Run the `main.py` script to combine the calibration results, perform object detection, and visualize the 3D object positions.
+7. If desired, use the `calibration_app.py` script to launch the user-friendly calibration app for capturing images and performing calibration.
+
+Note: Make sure to have the necessary dependencies installed, such as OpenCV, NumPy, scikit-learn, Matplotlib, TensorFlow, Keras, and PyQt5.
+
+Remember to replace the placeholder code and function implementations with your actual code for object detection, feature extraction, matching, SfM/SLAM, and calibration parameter optimization.
+
+This code provides a comprehensive pipeline for camera calibration, object detection, and visualization, incorporating various techniques such as deep learning-based corner detection, self-supervised learning, unsupervised calibration, and transfer learning.

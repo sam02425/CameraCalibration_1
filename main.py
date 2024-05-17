@@ -4,6 +4,9 @@ import pickle
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from calibration_app import CalibrationApp
+from PyQt5.QtWidgets import QApplication
+import sys
 
 # Define the platform's coordinate system
 platform_origin = np.array([0, 0, 0])  # X, Y, Z coordinates of the origin
@@ -86,3 +89,17 @@ ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 ax.set_title('Object Positions in Platform Coordinate System')
 plt.show()
+
+# Load the estimated calibration parameters and fine-tuned model
+calibration_params = np.load('calibration_params.npy')
+unsupervised_calibration_params = np.load('unsupervised_calibration_params.npy')
+fine_tuned_model = load_model('fine_tuned_calibration_model.h5')
+
+# Use the loaded calibration parameters and fine-tuned model for further processing
+# ...
+
+# Launch the user-friendly calibration app
+app = QApplication(sys.argv)
+calibration_app = CalibrationApp()
+calibration_app.show()
+sys.exit(app.exec_())

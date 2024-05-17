@@ -3,6 +3,7 @@ import numpy as np
 import glob
 import pickle
 import os
+from chessboard_corner_detection import detect_chessboard_corners
 
 def calibrate_camera(images_folder, chessboard_size, frame_size):
     # Prepare object points
@@ -20,10 +21,10 @@ def calibrate_camera(images_folder, chessboard_size, frame_size):
         img = cv2.imread(image)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        # Find chessboard corners
-        ret, corners = cv2.findChessboardCorners(gray, chessboard_size, None)
+        # Find chessboard corners using the automated corner detection
+        corners = detect_chessboard_corners(gray)
 
-        if ret:
+        if corners is not None:
             objpoints.append(objp)
             imgpoints.append(corners)
 
@@ -31,9 +32,6 @@ def calibrate_camera(images_folder, chessboard_size, frame_size):
     ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, frame_size, None, None)
 
     return camera_matrix, dist_coeffs
-
-# Load or define the pre-trained CNN model for feature extraction
-# model = ...  # Load or define the CNN model
 
 # Chessboard dimensions
 chessboard_size = (9, 6)  # Number of inner corners: (columns, rows)
