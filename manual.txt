@@ -1,0 +1,47 @@
+Introduction:
+This manual provides instructions for setting up and testing the Shelf Checkout System, which combines object detection using YOLOv5 and weight measurement using HX711 load cells. The system is designed to run on a Raspberry Pi 4 and requires multiple cameras and load cells for accurate shelf checkout monitoring.
+
+Prerequisites:
+- Raspberry Pi 4 with sufficient processing power and memory
+- Multiple cameras (e.g., USB cameras or CSI cameras) compatible with the Raspberry Pi 4
+- 4 HX711 load cells with appropriate wiring and connections
+- YOLOv5 model file (`.pt`) trained for object detection
+- Required dependencies and libraries installed (OpenCV, PyTorch, HX711 library)
+
+Hardware Setup:
+1. Connect the cameras to the Raspberry Pi 4 using the appropriate interfaces (USB or CSI).
+2. Connect the 4 HX711 load cells to the Raspberry Pi 4 according to the pin configuration specified in the code (`dout_pin` and `pd_sck_pin` for each load cell).
+3. Ensure that the load cells are properly mounted and positioned to accurately measure the weight of items on the shelf.
+4. Power on the Raspberry Pi 4 and ensure that all connections are secure.
+
+Software Setup:
+1. Install the required dependencies and libraries on the Raspberry Pi 4, including OpenCV, PyTorch, and the HX711 library.
+2. Copy the YOLOv5 model file (`.pt`) to the designated path on the Raspberry Pi 4.
+3. Update the `model_path`, `conf_thres`, `iou_thres`, and `camera_ids` variables in the code to match your setup and requirements.
+4. Calibrate the load cells by adjusting the scale factor in the `set_scale` method based on your calibration procedure. Ensure accurate weight measurements.
+5. Test the camera connections by running the code and verifying that frames are successfully captured from all connected cameras.
+
+Testing and Validation:
+1. Place known objects on the shelf and run the Shelf Checkout System code on the Raspberry Pi 4.
+2. Verify that the system accurately detects and identifies the objects using the YOLOv5 model. Check the displayed object labels and confidence scores.
+3. Validate that the system correctly measures the total weight of the items on the shelf using the load cells. Compare the displayed weight with the actual weight of the items.
+4. Test the system with various object types, sizes, and weights to ensure accurate detection and weight measurement.
+5. Verify that the system handles exceptions and edge cases gracefully, such as camera disconnections or load cell failures. Check the console output for any error messages.
+6. Conduct stress tests by running the system continuously for an extended period to assess its stability and reliability.
+7. Validate that the shelf checkout logic implemented in the `process_detected_objects_and_weight` method functions as intended based on your specific requirements.
+
+Troubleshooting:
+- If cameras fail to connect or frames are not captured, check the camera connections and ensure that the correct camera IDs are specified in the code.
+- If object detection is not accurate, verify that the YOLOv5 model is properly trained and the model file is compatible with the code.
+- If weight measurements are incorrect, recalibrate the load cells and ensure that they are properly mounted and connected.
+- If the system encounters errors or exceptions, refer to the console output for error messages and debug accordingly.
+- If performance is slow or the system lags, consider optimizing the code, reducing the number of connected cameras, or upgrading the hardware.
+
+Maintenance and Updates:
+- Regularly check the camera connections and load cell mounting to ensure stability and reliability.
+- Keep the Raspberry Pi 4 and connected components clean and free from dust and debris.
+- Monitor the system logs and console output for any error messages or anomalies.
+- Update the YOLOv5 model and code as necessary to improve object detection accuracy and performance.
+- Regularly backup the system configuration, model files, and any critical data.
+
+By following this manual and conducting thorough testing and validation, you can ensure that the Shelf Checkout System operates accurately and reliably in a production environment. Remember to adapt the setup and testing procedures based on your specific requirements and hardware setup.

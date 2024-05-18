@@ -1,0 +1,82 @@
+Calibration and Maintenance Guide:
+
+1. Introduction
+   1.1. Purpose
+   1.2. Scope
+   1.3. Safety Precautions
+
+2. Load Cell Calibration
+   2.1. Calibration Equipment
+       - Calibration Weights
+       - Calibration Platform
+   2.2. Calibration Procedure
+       - Preparing the Load Cells
+       - Applying Calibration Weights
+       - Adjusting Calibration Factors
+       - Verifying Calibration Accuracy
+   2.3. Calibration Frequency
+       - Initial Calibration
+       - Periodic Calibration
+       - Calibration after Hardware Changes
+
+3. Camera Maintenance
+   3.1. Cleaning Camera Lenses
+       - Cleaning Materials
+       - Cleaning Procedure
+   3.2. Camera Alignment and Focus
+       - Aligning Camera Positions
+       - Adjusting Camera Focus
+   3.3. Camera Connection Inspection
+       - Checking Cable Connections
+       - Verifying Camera Functionality
+
+4. Load Cell Maintenance
+   4.1. Load Cell Inspection
+       - Visual Inspection
+       - Checking for Physical Damage
+   4.2. Load Cell Connection Inspection
+       - Checking Wiring Connections
+       - Verifying Load Cell Outputs
+   4.3. Load Cell Replacement
+       - Identifying Faulty Load Cells
+       - Replacing Load Cells
+       - Recalibrating after Replacement
+
+5. System Maintenance
+   5.1. Hardware Cleaning
+       - Cleaning the Shelf Surface
+       - Cleaning the System Enclosure
+   5.2. Hardware Component Inspection
+       - Checking Connectors and Cables
+       - Inspecting Power Supply
+   5.3. Software Updates
+       - Updating Operating System
+       - Updating Shelf Checkout Software
+       - Updating Firmware
+
+6. Troubleshooting
+   6.1. Calibration Issues
+       - Inaccurate Weight Measurements
+       - Inconsistent Calibration Results
+   6.2. Hardware Issues
+       - Camera Connectivity Problems
+       - Load Cell Malfunction
+   6.3. Software Issues
+       - System Crashes or Freezes
+       - Incorrect Object Detection or Weight Measurement
+
+7. Maintenance Schedule
+   7.1. Daily Maintenance Tasks
+   7.2. Weekly Maintenance Tasks
+   7.3. Monthly Maintenance Tasks
+   7.4. Annual Maintenance Tasks
+
+8. Conclusion
+   8.1. Summary
+   8.2. Importance of Regular Maintenance
+
+9. Appendices
+   9.1. Calibration Log Template
+   9.2. Maintenance Checklist Template
+   9.3. Troubleshooting Flowcharts
+   9.4. Spare Parts and Tools List
