@@ -75,7 +75,7 @@ This project is licensed under the [MIT License](LICENSE).
 ## Here's a complete list of files and directories for project:
 
 ```
-your-project/
+project/
 ├── camera_calibration.py
 ├── stereo_calibration.py
 ├── object_detection.py
