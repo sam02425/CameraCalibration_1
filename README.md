@@ -70,7 +70,5 @@ This project is licensed under the [MIT License](LICENSE).
 - The YOLO object detection model is based on the work by Joseph Redmon et al.
 - The camera calibration and stereo calibration techniques are based on the OpenCV library.
 
-## Contact
-For any questions or inquiries, please contact [your-email@example.com](mailto:your-email@example.com).
 ```
 
