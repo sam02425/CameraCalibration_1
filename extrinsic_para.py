@@ -1,13 +1,24 @@
+# extrinsic_para.py: Calculate extrinsic parameters for stereo camera calibration
+
 import cv2
 import numpy as np
 import glob
 import pickle
 import os
 
+# Debug: Print current working directory
+print("Current working directory:", os.getcwd())
+
 # Load intrinsic parameters
-with open('/home/luuser1/Desktop/CameraCalibration_1/left_calibration.pkl', 'rb') as file:
+left_calibration_file = 'left_calibration.pkl'
+right_calibration_file = 'right_calibration.pkl'
+
+print("Loading left calibration file:", left_calibration_file)
+with open(left_calibration_file, 'rb') as file:
     cam1_camera_matrix, cam1_dist_coeffs = pickle.load(file)
-with open('/home/luuser1/Desktop/CameraCalibration_1/right_calibration.pkl', 'rb') as file:
+
+print("Loading right calibration file:", right_calibration_file)
+with open(right_calibration_file, 'rb') as file:
     cam2_camera_matrix, cam2_dist_coeffs = pickle.load(file)
 
 # Chessboard dimensions
@@ -24,15 +35,18 @@ imgpoints_left = []  # 2D points in left camera image plane
 imgpoints_right = []  # 2D points in right camera image plane
 
 # Get the list of calibration images
-left_images = sorted(glob.glob('/home/luuser1/Desktop/CameraCalibration_1/left_images/*.png'))
-right_images = sorted(glob.glob('/home/luuser1/Desktop/CameraCalibration_1/right_images/*.png'))
+left_images = sorted(glob.glob('left_images/*.png'))
+right_images = sorted(glob.glob('right_images/*.png'))
 
 # Take the minimum number of images from both folders
 num_images = min(len(left_images), len(right_images))
 
 # Create a directory to save the images with detected corners
-output_dir = '/home/luuser1/Desktop/CameraCalibration_1/detected_corners'
+output_dir = 'detected_corners'
 os.makedirs(output_dir, exist_ok=True)
+
+# Define the termination criteria for cornerSubPix
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 image_index = 0
 for left_image, right_image in zip(left_images[:num_images], right_images[:num_images]):
@@ -47,6 +61,8 @@ for left_image, right_image in zip(left_images[:num_images], right_images[:num_i
 
     if ret_left and ret_right:
         objpoints.append(objp)
+        corners_left = cv2.cornerSubPix(gray_left, corners_left, (11, 11), (-1, -1), criteria)
+        corners_right = cv2.cornerSubPix(gray_right, corners_right, (11, 11), (-1, -1), criteria)
         imgpoints_left.append(corners_left)
         imgpoints_right.append(corners_right)
 
@@ -66,17 +82,23 @@ print(f"Number of image points (right camera): {len(imgpoints_right)}")
 
 # Perform stereo camera calibration
 flags = cv2.CALIB_FIX_INTRINSIC
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 if len(objpoints) > 0 and len(imgpoints_left) > 0 and len(imgpoints_right) > 0:
-    retval, _, _, _, _, cam1_rotation_matrix, cam1_translation_vector, cam2_rotation_matrix, cam2_translation_vector = cv2.stereoCalibrate(
-        objpoints, imgpoints_left, imgpoints_right, cam1_camera_matrix, cam1_dist_coeffs, cam2_camera_matrix, cam2_dist_coeffs, frame_size, criteria=criteria, flags=flags)
+    try:
+        retval, _, _, _, _, R, T, E, F = cv2.stereoCalibrate(
+            objpoints, imgpoints_left, imgpoints_right, cam1_camera_matrix, cam1_dist_coeffs,
+            cam2_camera_matrix, cam2_dist_coeffs, frame_size, criteria=criteria, flags=flags)
+        if not retval:
+            raise ValueError("Stereo calibration failed.")
+    except cv2.error as e:
+        print("Stereo calibration error:", str(e))
+        raise e
 
     # Save extrinsic parameters
-    np.save('/home/luuser1/Desktop/CameraCalibration_1/cam1_rotation_matrix.npy', cam1_rotation_matrix)
-    np.save('/home/luuser1/Desktop/CameraCalibration_1/cam1_translation_vector.npy', cam1_translation_vector)
-    np.save('/home/luuser1/Desktop/CameraCalibration_1/cam2_rotation_matrix.npy', cam2_rotation_matrix)
-    np.save('/home/luuser1/Desktop/CameraCalibration_1/cam2_translation_vector.npy', cam2_translation_vector)
+    np.save('left_rotation_matrix.npy', R)
+    np.save('left_translation_vector.npy', T)
+    np.save('right_rotation_matrix.npy', R)
+    np.save('right_translation_vector.npy', T)
 
     print("Stereo camera calibration completed successfully.")
 else:
