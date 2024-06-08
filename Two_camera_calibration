@@ -1,7 +1,10 @@
+#Two_camera_calibration.py
+
 import cv2
 import numpy as np
 import glob
 import pickle
+import os
 
 ################ CAMERA CALIBRATION #############################
 
@@ -15,10 +18,18 @@ def calibrate_camera(images_folder, chessboard_size, frame_size):
     imgpoints = []  # 2D points in image plane
 
     # Get the list of calibration images
-    images = glob.glob(f'{images_folder}/*.png')
+    images = glob.glob(os.path.join(images_folder, '*.png'))
+    print(f"Found {len(images)} images in {images_folder}")
+
+    if len(images) == 0:
+        raise ValueError(f"No images found in {images_folder}")
 
     for image in images:
         img = cv2.imread(image)
+        if img is None:
+            print(f"Failed to load {image}")
+            continue
+
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find chessboard corners
@@ -26,11 +37,16 @@ def calibrate_camera(images_folder, chessboard_size, frame_size):
 
         if ret:
             objpoints.append(objp)
-            imgpoints.append(corners)
+            corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001))
+            imgpoints.append(corners2)
+        else:
+            print(f"Chessboard corners not found in {image}")
+
+    if not objpoints or not imgpoints:
+        raise ValueError("No chessboard corners found in any images. Ensure the chessboard size is correct and images are clear.")
 
     # Perform camera calibration
     ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, frame_size, None, None)
-
     return camera_matrix, dist_coeffs
 
 ################ COORDINATE TRANSFORMATION #############################
@@ -46,13 +62,22 @@ def transform_coordinates(detected_points, camera_matrix, dist_coeffs, rotation_
     # Convert rotation matrix and translation vector to 3x4 transformation matrix
     transformation_matrix = np.eye(4)
     transformation_matrix[:3, :3] = rotation_matrix
-    transformation_matrix[:3, 3] = (translation_vector.flatten() + offset)[:3]
+
+    # Check the shape and content of translation_vector
+    print("Shape of translation_vector:", translation_vector.shape)
+    print("Content of translation_vector:", translation_vector)
+
+    # Update the transformation matrix
+    if translation_vector.size == 0:
+        raise ValueError("Translation vector is empty. Please provide a valid translation vector.")
+    else:
+        transformation_matrix[:3, 3] = translation_vector.flatten()[:3]
     transformation_matrix = transformation_matrix[:3, :]  # Extract the first 3 rows
 
     # Transform object coordinates from camera coordinate system to world coordinate system
     object_points_world_homogeneous = []
     for point in undistorted_points_homogeneous:
-        transformed_point = np.dot(point, transformation_matrix)
+        transformed_point = np.dot(transformation_matrix, np.append(point, 1))
         object_points_world_homogeneous.append(transformed_point)
 
     object_points_world_homogeneous = np.array(object_points_world_homogeneous)
@@ -85,23 +110,26 @@ def main():
     left_offset = np.array([-12, 0, -6])  # 12 inches left, 6 inches back
     right_offset = np.array([12, 0, -6])  # 12 inches right, 6 inches back
 
-    # Rotation and translation matrices (replace with actual values)
-    left_rotation_matrix = np.eye(3)
-    left_translation_vector = np.zeros((3, 1))
-    right_rotation_matrix = np.eye(3)
-    right_translation_vector = np.zeros((3, 1))
+    # Load rotation matrices from files
+    left_rotation_matrix_actual = np.load('left_rotation_matrix.npy')
+    right_rotation_matrix_actual = np.load('right_rotation_matrix.npy')
+
+    # Load translation vectors from files
+    left_translation_vector_actual = np.load('left_translation_vector.npy')
+    right_translation_vector_actual = np.load('right_translation_vector.npy')
+
 
     # Object detection (replace with actual object detection code)
-    left_detected_points = np.array([[100, 200], [300, 400], [500, 600], [700, 800], [900, 1000]], dtype=np.float32)
-    right_detected_points = np.array([[150, 250], [350, 450], [550, 650], [750, 850], [950, 1050]], dtype=np.float32)
- 
+    left_detected_points = np.array([[100, 200], [300, 400], [500, 600], [700, 800], [900, 1000]], dtype=np.float32).reshape(-1, 1, 2)
+    right_detected_points = np.array([[150, 250], [350, 450], [550, 650], [750, 850], [950, 1050]], dtype=np.float32).reshape(-1, 1, 2)
+
     # Transform object coordinates for left camera
     left_object_points_world = transform_coordinates(left_detected_points, left_camera_matrix, left_dist_coeffs,
-                                                     left_rotation_matrix, left_translation_vector, left_offset)
+                                                     left_rotation_matrix_actual, left_translation_vector_actual, left_offset)
 
     # Transform object coordinates for right camera
     right_object_points_world = transform_coordinates(right_detected_points, right_camera_matrix, right_dist_coeffs,
-                                                      right_rotation_matrix, right_translation_vector, right_offset)
+                                                      right_rotation_matrix_actual, right_translation_vector_actual, right_offset)
 
     # Combine transformed object coordinates
     object_points_world = np.concatenate((left_object_points_world, right_object_points_world), axis=0)
