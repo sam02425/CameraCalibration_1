@@ -3,7 +3,6 @@ import numpy as np
 import cv2 as cv
 import glob
 import pickle
-import os
 
 ################ FIND CHESSBOARD CORNERS - OBJECT POINTS AND IMAGE POINTS #############################
 
@@ -17,126 +16,80 @@ criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((chessboardSize[0] * chessboardSize[1], 3), np.float32)
 objp[:, :2] = np.mgrid[0:chessboardSize[0], 0:chessboardSize[1]].T.reshape(-1, 2)
 
-size_of_chessboard_squares_mm = 20
+size_of_chessboard_squares_mm = 26
 objp = objp * size_of_chessboard_squares_mm
 
 # Arrays to store object points and image points from all the images.
-objpoints_left = []  # 3d point in real world space
-imgpoints_left = []  # 2d points in image plane.
-
-objpoints_right = []  # 3d point in real world space
-imgpoints_right = []  # 2d points in image plane.
+left_objpoints = []  # 3d point in real world space for left camera
+left_imgpoints = []  # 2d points in image plane for left camera.
+right_objpoints = []  # 3d point in real world space for right camera
+right_imgpoints = []  # 2d points in image plane for right camera.
 
 left_images = glob.glob('left_images/*.png')
 right_images = glob.glob('right_images/*.png')
 
 for left_image, right_image in zip(left_images, right_images):
     # Process left camera image
-    img_left = cv.imread(left_image)
-    gray_left = cv.cvtColor(img_left, cv.COLOR_BGR2GRAY)
+    left_img = cv.imread(left_image)
+    left_gray = cv.cvtColor(left_img, cv.COLOR_BGR2GRAY)
 
-    # Find the chess board corners for the left camera image
-    ret_left, corners_left = cv.findChessboardCorners(gray_left, chessboardSize, None)
+    # Find the chess board corners for left camera
+    ret_left, corners_left = cv.findChessboardCorners(left_gray, chessboardSize, None)
 
-    # If found, add object points, image points (after refining them) for the left camera
-    if ret_left == True:
-        objpoints_left.append(objp)
-        corners2_left = cv.cornerSubPix(gray_left, corners_left, (11, 11), (-1, -1), criteria)
-        imgpoints_left.append(corners2_left)
-        print("Left chessboard corners found.")
-    else:
-        print("Left chessboard corners not found.")
-
-        # # Draw and display the corners for the left camera image
-        # cv.drawChessboardCorners(img_left, chessboardSize, corners2_left, ret_left)
-        # cv.imshow('Left Camera', img_left)
-        # cv.waitKey(500)
+    # If found, add object points, image points (after refining them) for left camera
+    if ret_left:
+        left_objpoints.append(objp)
+        corners_left_refined = cv.cornerSubPix(left_gray, corners_left, (11, 11), (-1, -1), criteria)
+        left_imgpoints.append(corners_left_refined)
 
     # Process right camera image
-    img_right = cv.imread(right_image)
-    gray_right = cv.cvtColor(img_right, cv.COLOR_BGR2GRAY)
+    right_img = cv.imread(right_image)
+    right_gray = cv.cvtColor(right_img, cv.COLOR_BGR2GRAY)
 
-    # Find the chess board corners for the right camera image
-    ret_right, corners_right = cv.findChessboardCorners(gray_right, chessboardSize, None)
+    # Find the chess board corners for right camera
+    ret_right, corners_right = cv.findChessboardCorners(right_gray, chessboardSize, None)
 
-    # If found, add object points, image points (after refining them) for the right camera
-    if ret_right == True:
-        objpoints_right.append(objp)
-        corners2_right = cv.cornerSubPix(gray_right, corners_right, (11, 11), (-1, -1), criteria)
-        imgpoints_right.append(corners2_right)
-        print("Right chessboard corners found.")
-    else:
-        print("Right chessboard corners not found.")
+    # If found, add object points, image points (after refining them) for right camera
+    if ret_right:
+        right_objpoints.append(objp)
+        corners_right_refined = cv.cornerSubPix(right_gray, corners_right, (11, 11), (-1, -1), criteria)
+        right_imgpoints.append(corners_right_refined)
 
-        # # Draw and display the corners for the right camera image
-        # cv.drawChessboardCorners(img_right, chessboardSize, corners2_right, ret_right)
-        # cv.imshow('Right Camera', img_right)
-        # cv.waitKey(500)
+    # Draw and display the corners for both left and right cameras (optional)
+    if ret_left and ret_right:
+        cv.drawChessboardCorners(left_img, chessboardSize, corners_left_refined, ret_left)
+        cv.drawChessboardCorners(right_img, chessboardSize, corners_right_refined, ret_right)
+        cv.imshow('Left Image', left_img)
+        cv.imshow('Right Image', right_img)
+        cv.waitKey(1000)
 
 cv.destroyAllWindows()
-
-print("Number of valid left calibration images:", len(objpoints_left))
-print("Number of valid right calibration images:", len(objpoints_right))
 
 ############## CALIBRATION #######################################################
 
 # Calibrate left camera
-ret_left, cameraMatrix_left, dist_left, rvecs_left, tvecs_left = cv.calibrateCamera(objpoints_left, imgpoints_left, frameSize, None, None)
+ret_left, cameraMatrix_left, dist_left, rvecs_left, tvecs_left = cv.calibrateCamera(
+    left_objpoints, left_imgpoints, frameSize, None, None)
 
-# Save the left camera calibration result
-os.makedirs('left_calibration', exist_ok=True)
-pickle.dump((cameraMatrix_left, dist_left), open("left_calibration/calibration.pkl", "wb"))
-pickle.dump(cameraMatrix_left, open("left_calibration/cameraMatrix.pkl", "wb"))
-pickle.dump(dist_left, open("left_calibration/dist.pkl", "wb"))
+# Save the left camera calibration result for later use
+pickle.dump((cameraMatrix_left, dist_left), open("left_calibration.pkl", "wb"))
 
 # Calibrate right camera
-ret_right, cameraMatrix_right, dist_right, rvecs_right, tvecs_right = cv.calibrateCamera(objpoints_right, imgpoints_right, frameSize, None, None)
+ret_right, cameraMatrix_right, dist_right, rvecs_right, tvecs_right = cv.calibrateCamera(
+    right_objpoints, right_imgpoints, frameSize, None, None)
 
-# Save the right camera calibration result
-os.makedirs('right_calibration', exist_ok=True)
-pickle.dump((cameraMatrix_right, dist_right), open("right_calibration/calibration.pkl", "wb"))
-pickle.dump(cameraMatrix_right, open("right_calibration/cameraMatrix.pkl", "wb"))
-pickle.dump(dist_right, open("right_calibration/dist.pkl", "wb"))
+# Save the right camera calibration result for later use
+pickle.dump((cameraMatrix_right, dist_right), open("right_calibration.pkl", "wb"))
 
-############## UNDISTORTION #####################################################
+# Print the calibration results (optional)
+print("Left Camera Calibration Result:")
+print("Camera Matrix:\n", cameraMatrix_left)
+print("Distortion Coefficients:\n", dist_left)
 
-# Undistort left camera image
-img_left = cv.imread('cali.png')
-h, w = img_left.shape[:2]
-newCameraMatrix_left, roi_left = cv.getOptimalNewCameraMatrix(cameraMatrix_left, dist_left, (w, h), 1, (w, h))
+print("Right Camera Calibration Result:")
+print("Camera Matrix:\n", cameraMatrix_right)
+print("Distortion Coefficients:\n", dist_right)
 
-dst_left = cv.undistort(img_left, cameraMatrix_left, dist_left, None, newCameraMatrix_left)
-x, y, w, h = roi_left
-dst_left = dst_left[y:y+h, x:x+w]
-cv.imwrite('left_calibration/caliResult.png', dst_left)
-
-# Undistort right camera image
-img_right = cv.imread('cali.png')
-h, w = img_right.shape[:2]
-newCameraMatrix_right, roi_right = cv.getOptimalNewCameraMatrix(cameraMatrix_right, dist_right, (w, h), 1, (w, h))
-
-dst_right = cv.undistort(img_right, cameraMatrix_right, dist_right, None, newCameraMatrix_right)
-x, y, w, h = roi_right
-dst_right = dst_right[y:y+h, x:x+w]
-cv.imwrite('right_calibration/caliResult.png', dst_right)
-
-############## REPROJECTION ERROR #####################################################
-
-# Calculate reprojection error for left camera
-mean_error_left = 0
-for i in range(len(objpoints_left)):
-    imgpoints2_left, _ = cv.projectPoints(objpoints_left[i], rvecs_left[i], tvecs_left[i], cameraMatrix_left, dist_left)
-    error_left = cv.norm(imgpoints_left[i], imgpoints2_left, cv.NORM_L2) / len(imgpoints2_left)
-    mean_error_left += error_left
-print("Left camera total reprojection error: {}".format(mean_error_left / len(objpoints_left)))
-
-# Calculate reprojection error for right camera
-mean_error_right = 0
-for i in range(len(objpoints_right)):
-    imgpoints2_right, _ = cv.projectPoints(objpoints_right[i], rvecs_right[i], tvecs_right[i], cameraMatrix_right, dist_right)
-    error_right = cv.norm(imgpoints_right[i], imgpoints2_right, cv.NORM_L2) / len(imgpoints2_right)
-    mean_error_right += error_right
-print("Right camera total reprojection error: {}".format(mean_error_right / len(objpoints_right)))
 
 #############################################
 # for single cam
@@ -150,7 +103,7 @@ print("Right camera total reprojection error: {}".format(mean_error_right / len(
 
 # ################ FIND CHESSBOARD CORNERS - OBJECT POINTS AND IMAGE POINTS #############################
 
-# chessboardSize = (9,6)
+# chessboardSize = (7, 10)
 # frameSize = (640,480)
 
 
@@ -250,3 +203,4 @@ print("Right camera total reprojection error: {}".format(mean_error_right / len(
 #     mean_error += error
 
 # print( "total error: {}".format(mean_error/len(objpoints)) )
+
