@@ -1,7 +1,9 @@
+# stereo_calibration.py is used to calibrate the stereo camera system.
+
 import cv2
 import numpy as np
-import glob
 import pickle
+import glob
 
 def main():
     # Chessboard dimensions
@@ -45,14 +47,35 @@ def main():
     # Perform stereo calibration
     flags = cv2.CALIB_FIX_INTRINSIC
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    ret, _, _, _, _, R, T, E, F = cv2.stereoCalibrate(objpoints, left_imgpoints, right_imgpoints,
-                                                      left_camera_matrix, left_dist_coeffs,
-                                                      right_camera_matrix, right_dist_coeffs,
-                                                      frame_size, criteria=criteria, flags=flags)
+    try:
+        ret, _, _, _, _, R, T, E, F = cv2.stereoCalibrate(objpoints, left_imgpoints, right_imgpoints,
+                                                        left_camera_matrix, left_dist_coeffs,
+                                                        right_camera_matrix, right_dist_coeffs,
+                                                        frame_size, criteria=criteria, flags=flags)
+        if not ret:
+            raise ValueError("Stereo calibration failed.")
+    except cv2.error as e:
+        print("Stereo calibration error:", str(e))
+        raise e
 
     # Save the stereo calibration results
     with open('stereo_calibration.pkl', 'wb') as file:
         pickle.dump((R, T), file)
 
+    # Obtain rotation and translation matrices from stereo calibration
+    left_rotation_matrix_actual = R
+    left_translation_vector_actual = T[:, :3]
+
+    # For the right camera
+    right_rotation_matrix_actual = R
+    right_translation_vector_actual = T[:, 3:]
+
+    # Save rotation and translation matrices
+    np.save('left_rotation_matrix.npy', left_rotation_matrix_actual)
+    np.save('left_translation_vector.npy', left_translation_vector_actual)
+    np.save('right_rotation_matrix.npy', right_rotation_matrix_actual)
+    np.save('right_translation_vector.npy', right_translation_vector_actual)
+
 if __name__ == '__main__':
     main()
+
